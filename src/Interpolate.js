@@ -1,30 +1,34 @@
 // https://www.npmjs.org/package/react-interpolate-component
-'use strict';
+// TODO: Drop this in favor of es6 string interpolation
 
-var React = require('react');
-var ValidComponentChildren = require('./utils/ValidComponentChildren');
-var assign = require('./utils/Object.assign');
+import React from 'react';
+import ValidComponentChildren from './utils/ValidComponentChildren';
 
-var REGEXP = /\%\((.+?)\)s/;
+const REGEXP = /\%\((.+?)\)s/;
 
-var Interpolate = React.createClass({
+const Interpolate = React.createClass({
   displayName: 'Interpolate',
 
   propTypes: {
-    format: React.PropTypes.string
+    component: React.PropTypes.node,
+    format: React.PropTypes.string,
+    unsafe: React.PropTypes.bool
   },
 
-  getDefaultProps: function() {
-    return { component: 'span' };
+  getDefaultProps() {
+    return {
+      component: 'span',
+      unsafe: false
+    };
   },
 
-  render: function() {
-    var format = (ValidComponentChildren.hasValidComponent(this.props.children) ||
+  render() {
+    let format = (ValidComponentChildren.hasValidComponent(this.props.children) ||
         (typeof this.props.children === 'string')) ?
         this.props.children : this.props.format;
-    var parent = this.props.component;
-    var unsafe = this.props.unsafe === true;
-    var props = assign({}, this.props);
+    let parent = this.props.component;
+    let unsafe = this.props.unsafe === true;
+    let props = {...this.props};
 
     delete props.children;
     delete props.format;
@@ -32,8 +36,8 @@ var Interpolate = React.createClass({
     delete props.unsafe;
 
     if (unsafe) {
-      var content = format.split(REGEXP).reduce(function(memo, match, index) {
-        var html;
+      let content = format.split(REGEXP).reduce((memo, match, index) => {
+        let html;
 
         if (index % 2 === 0) {
           html = match;
@@ -54,29 +58,28 @@ var Interpolate = React.createClass({
       props.dangerouslySetInnerHTML = { __html: content };
 
       return React.createElement(parent, props);
-    } else {
-      var kids = format.split(REGEXP).reduce(function(memo, match, index) {
-        var child;
+    }
+    let kids = format.split(REGEXP).reduce((memo, match, index) => {
+      let child;
 
-        if (index % 2 === 0) {
-          if (match.length === 0) {
-            return memo;
-          }
-
-          child = match;
-        } else {
-          child = props[match];
-          delete props[match];
+      if (index % 2 === 0) {
+        if (match.length === 0) {
+          return memo;
         }
 
-        memo.push(child);
+        child = match;
+      } else {
+        child = props[match];
+        delete props[match];
+      }
 
-        return memo;
-      }, []);
+      memo.push(child);
 
-      return React.createElement(parent, props, kids);
-    }
+      return memo;
+    }, []);
+
+    return React.createElement(parent, props, kids);
   }
 });
 
-module.exports = Interpolate;
+export default Interpolate;

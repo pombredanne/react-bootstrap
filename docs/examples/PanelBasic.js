@@ -1,7 +1,11 @@
-var panelInstance = (
-    <Panel>
-      Basic panel example
-    </Panel>
-  );
+function handleClick() {
+  alert('You have clicked on me');
+}
 
-React.render(panelInstance, mountNode);
+const panelInstance = (
+  <Panel onClick={ handleClick }>
+    Basic panel example
+  </Panel>
+);
+
+ReactDOM.render(panelInstance, mountNode);

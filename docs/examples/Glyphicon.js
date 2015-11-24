@@ -1,4 +1,4 @@
-var glyphInstance = (
+const glyphInstance = (
   <div>
     <ButtonToolbar>
       <ButtonGroup>
@@ -19,4 +19,4 @@ var glyphInstance = (
   </div>
 );
 
-React.render(glyphInstance, mountNode);
+ReactDOM.render(glyphInstance, mountNode);

@@ -1,62 +1,53 @@
-var React = require('react');
+import { createChainableTypeChecker } from 'react-prop-types/lib/common';
 
-var ANONYMOUS = '<<anonymous>>';
+import childrenToArray from './childrenToArray';
 
-var CustomPropTypes = {
-  /**
-   * Checks whether a prop provides a DOM element
-   *
-   * The element can be provided in two forms:
-   * - Directly passed
-   * - Or passed an object which has a `getDOMNode` method which will return the required DOM element
-   *
-   * @param props
-   * @param propName
-   * @param componentName
-   * @returns {Error|undefined}
-   */
-  mountable: createMountableChecker()
+export default {
+
+  requiredRoles(...roles) {
+    return createChainableTypeChecker(
+      function requiredRolesValidator(props, propName, component) {
+        let missing;
+        let children = childrenToArray(props.children);
+
+        let inRole = (role, child) => role === child.props.bsRole;
+
+        roles.every(role => {
+          if (!children.some(child => inRole(role, child))) {
+            missing = role;
+            return false;
+          }
+          return true;
+        });
+
+        if (missing) {
+          return new Error(`(children) ${component} - Missing a required child with bsRole: ${missing}. ` +
+            `${component} must have at least one child of each of the following bsRoles: ${roles.join(', ')}`);
+        }
+      });
+  },
+
+  exclusiveRoles(...roles) {
+    return createChainableTypeChecker(
+      function exclusiveRolesValidator(props, propName, component) {
+        let children = childrenToArray(props.children);
+        let duplicate;
+
+        roles.every(role => {
+          let childrenWithRole = children.filter(child => child.props.bsRole === role);
+
+          if (childrenWithRole.length > 1) {
+            duplicate = role;
+            return false;
+          }
+          return true;
+        });
+
+        if (duplicate) {
+          return new Error(
+            `(children) ${component} - Duplicate children detected of bsRole: ${duplicate}. ` +
+            `Only one child each allowed with the following bsRoles: ${roles.join(', ')}`);
+        }
+      });
+  }
 };
-
-/**
- * Create chain-able isRequired validator
- *
- * Largely copied directly from:
- *  https://github.com/facebook/react/blob/0.11-stable/src/core/ReactPropTypes.js#L94
- */
-function createChainableTypeChecker(validate) {
-  function checkType(isRequired, props, propName, componentName) {
-    componentName = componentName || ANONYMOUS;
-    if (props[propName] == null) {
-      if (isRequired) {
-        return new Error(
-          'Required prop `' + propName + '` was not specified in ' +
-            '`' + componentName + '`.'
-        );
-      }
-    } else {
-      return validate(props, propName, componentName);
-    }
-  }
-
-  var chainedCheckType = checkType.bind(null, false);
-  chainedCheckType.isRequired = checkType.bind(null, true);
-
-  return chainedCheckType;
-}
-
-function createMountableChecker() {
-  function validate(props, propName, componentName) {
-    if (typeof props[propName] !== 'object' ||
-      typeof props[propName].getDOMNode !== 'function' && props[propName].nodeType !== 1) {
-      return new Error(
-        'Invalid prop `' + propName + '` supplied to ' +
-          '`' + componentName + '`, expected a DOM element or an object that has a `getDOMNode` method'
-      );
-    }
-  }
-
-  return createChainableTypeChecker(validate);
-}
-
-module.exports = CustomPropTypes;

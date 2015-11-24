@@ -1,33 +1,65 @@
-'use strict';
+/* eslint no-console: 0 */
 
-var express = require('express');
+import 'colors';
+import express from 'express';
+import httpProxy from 'http-proxy';
+import ip from 'ip';
+import path from 'path';
+import React from 'react';
+import ReactDOMServer from 'react-dom/server';
+import {match, RoutingContext} from 'react-router';
 
-var development = process.env.NODE_ENV !== 'production';
-var app = express();
+import Root from './src/Root';
+import routes from './src/Routes';
+
+import metadata from './generate-metadata';
+
+const development = process.env.NODE_ENV !== 'production';
+const port = process.env.PORT || 4000;
+
+const app = express();
 
 if (development) {
-  var path = require('path');
-  var url = require('url');
-  var browserify = require('connect-browserify');
-  var nodejsx = require('node-jsx').install();
-  var Root = require('./src/Root');
+  const proxy = httpProxy.createProxyServer();
+  const webpackPort = process.env.WEBPACK_DEV_PORT;
 
-  app = app
-    .get('/assets/bundle.js', browserify('./client', {debug: true, watch: false}))
-    .use('/assets', express.static(path.join(__dirname, 'assets')))
-    .use('/vendor', express.static(path.join(__dirname, 'vendor')))
-    .use(function renderApp(req, res) {
-      var fileName = url.parse(req.url).pathname;
-      var RootHTML = Root.renderToString({initialPath: fileName});
+  const target = `http://${ip.address()}:${webpackPort}`;
+  Root.assetBaseUrl = target;
 
-      res.send(RootHTML);
+  app.get('/assets/*', (req, res) => {
+    proxy.web(req, res, { target });
+  });
+
+  proxy.on('error', e => {
+    console.log('Could not connect to webpack proxy'.red);
+    console.log(e.toString().red);
+  });
+
+  console.log('Prop data generation started:'.green);
+
+  metadata().then(props => {
+    console.log('Prop data generation finished:'.green);
+    Root.propData = props;
+
+    app.use(function renderApp(req, res) {
+      res.header('Access-Control-Allow-Origin', target);
+      res.header('Access-Control-Allow-Headers', 'X-Requested-With');
+
+      const location = req.url;
+      match({routes, location}, (error, redirectLocation, renderProps) => {
+        const html = ReactDOMServer.renderToString(
+          <RoutingContext {...renderProps} />
+        );
+        res.send('<!doctype html>' + html);
+      });
     });
+  });
 } else {
-  app = app
-    .use(express.static(__dirname));
+  app.use(express.static(path.join(__dirname, '../docs-built')));
 }
 
-app
-  .listen(4000, function () {
-    console.log('Server started at http://localhost:4000');
-  });
+app.listen(port, () => {
+  console.log(`Server started at:`);
+  console.log(`- http://localhost:${port}`);
+  console.log(`- http://${ip.address()}:${port}`);
+});

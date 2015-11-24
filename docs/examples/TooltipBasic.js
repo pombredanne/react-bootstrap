@@ -1,11 +1,21 @@
-var holderStyle = {height: 50};
+const tooltipInstance = (
+  <div>
+    <Tooltip placement="right" className="in">
+      Tooltip right
+    </Tooltip>
 
-var tooltipInstance = (
-    <div style={holderStyle}>
-      <Tooltip placement="right" positionLeft={150} positionTop={50}>
-        <strong>Holy guacamole!</strong> Check this info.
-      </Tooltip>
-    </div>
-  );
+    <Tooltip placement="top" className="in">
+      Tooltip top
+    </Tooltip>
 
-React.render(tooltipInstance, mountNode);
+    <Tooltip placement="left" className="in">
+      Tooltip left
+    </Tooltip>
+
+    <Tooltip placement="bottom" className="in">
+      Tooltip bottom
+    </Tooltip>
+  </div>
+);
+
+ReactDOM.render(tooltipInstance, mountNode);

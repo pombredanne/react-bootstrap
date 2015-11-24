@@ -1,14 +1,24 @@
-var inputAddonsInstance = (
-    <form>
-      <Input type="text" addonBefore="@" />
-      <Input type="text" addonAfter=".00" />
-      <Input type="text" addonBefore="$" addonAfter=".00" />
-      <Input type="text" addonAfter={<Glyphicon glyph="music" />} />
-      <Input type="text" buttonBefore={<Button>Before</Button>} />
-      <Input type="text" buttonAfter={<DropdownButton title="Action">
-        <MenuItem key="1">Item</MenuItem>
-      </DropdownButton>} />
-    </form>
-  );
+const innerGlyphicon = <Glyphicon glyph="music" />;
+const innerButton = <Button>Before</Button>;
+const innerDropdown = (
+  <DropdownButton title="Action" id="input-dropdown-addon">
+    <MenuItem key="1">Item</MenuItem>
+  </DropdownButton>
+);
+const innerRadio = <input type="radio" aria-label="..." />;
+const innerCheckbox = <input type="checkbox" aria-label="..." />;
 
-React.render(inputAddonsInstance, mountNode);
+const inputAddonsInstance = (
+  <form>
+    <Input type="text" addonBefore="@" />
+    <Input type="text" addonAfter=".00" />
+    <Input type="text" addonBefore="$" addonAfter=".00" />
+    <Input type="text" addonAfter={innerGlyphicon} />
+    <Input type="text" buttonBefore={innerButton} />
+    <Input type="text" buttonAfter={innerDropdown} />
+    <Input type="text" addonBefore={innerRadio} />
+    <Input type="text" addonBefore={innerCheckbox} />
+  </form>
+);
+
+ReactDOM.render(inputAddonsInstance, mountNode);
